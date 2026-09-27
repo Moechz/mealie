@@ -1,0 +1,112 @@
+{
+  "app_id": "mealiedocker",
+  "title": "Mealie",
+  "image": "hkotel/mealie:v3.28.0",
+  "repo_name": "mealie",
+  "mode": "plain",
+  "container_port": 9000,
+  "category": [
+    "Utilities"
+  ],
+  "user": "1000:1000",
+  "volumes": [
+    {
+      "host": "/Volume1/DockerAppData/mealiedocker/data",
+      "container": "/app/data"
+    }
+  ],
+  "env": {
+    "TZ": "Asia/Shanghai"
+  },
+  "healthcheck": [
+    "CMD-SHELL",
+    "curl -s -o /dev/null http://127.0.0.1:9000/api/app/about || exit 1"
+  ],
+  "auth": "mealie-recipes",
+  "upstream_url": "https://github.com/mealie-recipes/mealie",
+  "upstream_license": "AGPL-3.0",
+  "license": "AGPL-3.0",
+  "descript": "Mealie is a self-hosted recipe manager. Paste the address of a recipe page and Mealie imports the ingredients and steps into your own cookbook; from there you plan the week's meals, build a shopping list from the recipes you chose, and share everything with your household. This app runs the official Docker Hub image as a non-root container on your NAS and keeps recipes, photos, users and the database in the application data folder, so nothing is lost on restart or update.",
+  "release_note": "1. First release: Mealie 3.28.0 from Docker Hub, running as a non-root container. Recipes, photos and the database live in the application data folder and survive restarts and updates.",
+  "important": "Requires DockerEngine (installed if missing); add a registry mirror if Docker Hub is unreachable. Open http://<NAS-IP>:8010/. First login: changeme@example.com with password MyPassword - change the e-mail and the password in the user settings right away. Everything is kept in DockerAppData/mealiedocker; keep data/.secret and data/.session_secret, they are needed for saved integrations and login sessions. Back up the data folder before uninstalling with data removal.",
+  "data_notes": "Everything Mealie stores lives in one directory: `mealie.db` (the SQLite database with recipes, users, meal plans and shopping lists), `recipes/` (uploaded and scraped images), `backups/` (automatic backups Mealie creates itself), `mealie.log` and the two key files `.secret` and `.session_secret` that protect saved integrations and login sessions.",
+  "design_notes": [
+    "**Runs as the non-root application user.** The upstream start script only switches to a dedicated user when it is started as root; with `user: \"1000:1000\"` Mealie serves directly, verified on real hardware.",
+    "**Fixed image tag, never `:latest`**, Docker Hub only, no `privileged`, no `network_mode: host`, no Docker socket.",
+    "**Health check** probing `/api/app/about` on container port 9000, the same endpoint the upstream image uses.",
+    "**One data directory.** The whole application state is `/app/data`, mounted from the application data folder, so copying that folder is a complete backup."
+  ],
+  "limitations": [
+    "The first login uses the built-in administrator `changeme@example.com` with the password `MyPassword`. Change the e-mail address and the password immediately, otherwise anyone on your network can sign in.",
+    "Recipe import depends on the source website. Pages that block automated access or hide their content behind a login cannot be imported automatically; Mealie lets you enter those recipes by hand.",
+    "The app is served over plain HTTP on the LAN. Do not expose the published port to the internet without TLS."
+  ],
+  "runtime_files": [
+    {
+      "path": "data/mealie.db",
+      "purpose": "recipes, ingredients, users, meal plans and shopping lists (SQLite database)",
+      "created": "first start",
+      "growth": "grows with every recipe and plan",
+      "lifecycle": "never overwritten; back it up before uninstalling with data removal"
+    },
+    {
+      "path": "data/.secret",
+      "purpose": "key that encrypts saved integration secrets (mail, OIDC, webhooks)",
+      "created": "first start",
+      "growth": "static",
+      "lifecycle": "never overwritten; without it saved secrets can no longer be read"
+    },
+    {
+      "path": "data/.session_secret",
+      "purpose": "key used to sign login sessions",
+      "created": "first start",
+      "growth": "static",
+      "lifecycle": "never overwritten; changing it logs everyone out"
+    },
+    {
+      "path": "data/recipes",
+      "purpose": "images uploaded with recipes",
+      "created": "first start",
+      "growth": "grows with every recipe that has a photo",
+      "lifecycle": "managed by Mealie"
+    },
+    {
+      "path": "data/backups",
+      "purpose": "automatic backups created by Mealie",
+      "created": "on the configured backup schedule",
+      "growth": "bounded by Mealie's retention setting",
+      "lifecycle": "managed by Mealie; safe to copy elsewhere"
+    },
+    {
+      "path": "data/mealie.log",
+      "purpose": "application log",
+      "created": "first start",
+      "growth": "appended; rotate or delete if it gets large",
+      "lifecycle": "safe to delete"
+    }
+  ],
+  "platform": "x86_64",
+  "publisher": "Moechz",
+  "compose_project": "mealiedocker",
+  "github_repo": "mealie",
+  "upstream_version": "3.28.0",
+  "release_tag_prefix": "v",
+  "version": "3.28.0-1",
+  "help": "https://github.com/Moechz/mealie/issues",
+  "official": "https://github.com/mealie-recipes/mealie",
+  "host_port": 8010,
+  "translations": {
+    "zh-cn": {
+      "descript": "Mealie 是自托管的菜谱管理器。把菜谱网页地址粘进去，Mealie 就会自动抓取食材与步骤存进你自己的菜谱库；之后可以安排每周菜单、按选中的菜谱生成购物清单，并与家人共享。本应用在 NAS 上以非 root 容器运行 Docker Hub 官方镜像，菜谱、图片、用户与数据库都保存在应用数据目录中，重启与更新都不会丢失。",
+      "important": "需要 DockerEngine（缺失时应用中心会自动提示安装）；若 NAS 无法直连 Docker Hub，请先配置镜像加速。安装后打开 http://<NAS-IP>:8010/。首次登录使用内置管理员 changeme@example.com，密码 MyPassword，请立即在用户设置里修改邮箱与密码。所有数据都在 DockerAppData/mealiedocker 目录；data/.secret 与 data/.session_secret 请务必保留，否则已保存的集成密钥与会话将无法恢复。卸载并删除数据前请先备份应用数据目录。",
+      "release_note": "1. 首次发布：来自 Docker Hub 的 Mealie 3.28.0，以非 root 容器运行。菜谱、图片与数据库保存在应用数据目录，重启与更新都不会丢失。"
+    },
+    "zh-hk": {
+      "descript": "Mealie 是自架式食譜管理器。把食譜網頁位址貼進去，Mealie 就會自動抓取材料與步驟存進你自己的食譜庫；之後可以安排每週菜單、依選中的食譜產生購物清單，並與家人共享。本應用在 NAS 上以非 root 容器執行 Docker Hub 官方映像，食譜、圖片、使用者與資料庫都保存在應用資料目錄中，重新啟動與更新都不會遺失。",
+      "important": "需要 DockerEngine（缺少時應用中心會自動提示安裝）；若 NAS 無法直連 Docker Hub，請先設定映像加速。安裝後開啟 http://<NAS-IP>:8010/。首次登入使用內建管理員 changeme@example.com，密碼 MyPassword，請立即在使用者設定中修改電郵與密碼。所有資料都在 DockerAppData/mealiedocker 目錄；data/.secret 與 data/.session_secret 請務必保留，否則已儲存的整合金鑰與工作階段將無法還原。解除安裝並刪除資料前請先備份應用資料目錄。",
+      "release_note": "1. 首次發佈：來自 Docker Hub 的 Mealie 3.28.0，以非 root 容器執行。食譜、圖片與資料庫保存在應用資料目錄，重新啟動與更新都不會遺失。"
+    }
+  },
+  "docker_socket": false,
+  "group_add": []
+}
